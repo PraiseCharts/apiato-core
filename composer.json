@@ -56,10 +56,10 @@
     },
     "autoload": {
         "psr-4": {
-            "Apiato\\Core\\": "src/"
+            "Apiato\\Core\\": ""
         },
         "files": [
-            "src/Helpers/helpers.php"
+            "Helpers/helpers.php"
         ]
     },
     "autoload-dev": {
