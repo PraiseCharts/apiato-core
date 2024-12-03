@@ -159,8 +159,8 @@ trait RoutesLoaderTrait
     
         // Replace underscore with period for decimal versioning
         return str_replace(
-          Config::get('apiato.api.multiple_segment_version_file_seperator', '-'), 
-          Config::get('apiato.api.multiple_segment_version_route_seperator', '.'), 
+          config('apiato.api.multiple_segment_version_file_seperator', '-'), 
+          config('apiato.api.multiple_segment_version_route_seperator', '.'), 
           $version
         );
     }
