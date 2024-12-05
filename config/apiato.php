@@ -36,7 +36,7 @@ return [
         |--------------------------------------------------------------------------
         */
         'version_extractor' => [
-            'class' => \Apiato\Core\Foundation\Routing\Versioning\DefaultRouteVersionExtractor::class,
+            'class' => \Apiato\Core\Foundation\Routing\Versioning\Extractor\DefaultRouteVersionExtractor::class,
             
             // Configuration for the default extractor
             'parameters' => []
