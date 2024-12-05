@@ -1,6 +1,6 @@
 <?php
 
-namespace Apiato\Core\Foundation\Routing\Versioning;
+namespace Apiato\Core\Foundation\Routing\Versioning\Extractors;
 
 use Apiato\Core\Foundation\Routing\Versioning\Contracts\RouteVersionExtractorInterface;
 use Symfony\Component\Finder\SplFileInfo;

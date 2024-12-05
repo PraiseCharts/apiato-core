@@ -4,7 +4,7 @@ namespace Apiato\Core\Loaders;
 
 use Apiato\Core\Foundation\Facades\Apiato;
 use Apiato\Core\Foundation\Routing\Versioning\Contracts\RouteVersionExtractorInterface;
-use Apiato\Core\Foundation\Routing\Versioning\DefaultRouteVersionExtractor;
+use Apiato\Core\Foundation\Routing\Versioning\Extractors\DefaultRouteVersionExtractor;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
