@@ -32,6 +32,18 @@ return [
 
         /*
         |--------------------------------------------------------------------------
+        | API Version Route Extractor
+        |--------------------------------------------------------------------------
+        */
+        'version_extractor' => [
+            'class' => \Apiato\Core\Foundation\Routing\Versioning\DefaultRouteVersionExtractor::class,
+            
+            // Configuration for the default extractor
+            'parameters' => []
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
         | Access Token Expiration Time
         |--------------------------------------------------------------------------
         |

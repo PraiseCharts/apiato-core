@@ -3,6 +3,9 @@
 namespace Apiato\Core\Loaders;
 
 use Apiato\Core\Foundation\Facades\Apiato;
+use Apiato\Core\Foundation\Routing\Versioning\Contracts\RouteVersionExtractorInterface;
+use Apiato\Core\Foundation\Routing\Versioning\DefaultRouteVersionExtractor;
+use Apiato\Core\Foundation\Routing\Versioning\Traits\HasVersionExtractor;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -13,6 +16,7 @@ use Symfony\Component\Finder\SplFileInfo;
 
 trait RoutesLoaderTrait
 {
+    use HasVersionExtractor;
     /**
      * Register all the containers routes files in the framework.
      */
@@ -130,39 +134,22 @@ trait RoutesLoaderTrait
         return config('apiato.api.prefix') . (config('apiato.api.enable_version_prefix') ? $this->getRouteFileVersionFromFileName($file) : '');
     }
 
-    // TODO: Refactor. Ask Isiah about his thoughts on this.
-    //  I think we should abstract this.
-    //  and the user should be able to provide his logic for parsing the version from the file name.
-    //  Maybe we can extract it into a class that implements an interface that the user can implement?
-    //   - This way we can provide a default implementation that the user can override.
-    //  This implementation is also very limiting as it only allows the versioning to be disabled as a whole or enabled.
-    //   - What if the user whats to use another versioning strategy?
-    //   - What if the user wants to use a different versioning just for some routes?
-    //  The current implementation is also very coupled with the file name.
-    //   If versioning is enabled:
-    //   - It expects version to be the one element before the last one (split on ".").
-    //   - If user forgets to add the version to the file name, it will not work.
-    //      And we will have a problem!
-    private function getRouteFileVersionFromFileName(SplFileInfo $file): string|bool
+    private function getRouteFileVersionFromFileName(SplFileInfo $file): string|false
     {
-        $fileNameWithoutExtension = $this->getRouteFileNameWithoutExtension($file);
+        $extractor = $this->getRouteVersionExtractor();
+        return $extractor->extractVersion($file);
+    }
+
+    private function getRouteVersionExtractor(): RouteVersionExtractorInterface 
+    {
+        $extractorConfig = config('apiato.api.version_extractor', []);
         
-        $fileNameWithoutExtensionExploded = explode('.', $fileNameWithoutExtension);
-    
-        end($fileNameWithoutExtensionExploded);
-    
-        $version = prev($fileNameWithoutExtensionExploded);
-    
-        if ($version === 'noversion') {
-            return false;
-        }
-    
-        // Replace underscore with period for decimal versioning
-        return str_replace(
-          config('apiato.api.multiple_segment_version_file_seperator', '-'), 
-          config('apiato.api.multiple_segment_version_route_seperator', '.'), 
-          $version
-        );
+        $extractorClass = $extractorConfig['class'] 
+            ?? DefaultRouteVersionExtractor::class;
+            
+        $parameters = $extractorConfig['parameters'] ?? [];
+        
+        return new $extractorClass(...$parameters);
     }
 
     private function getRouteFileNameWithoutExtension(SplFileInfo $file): string
