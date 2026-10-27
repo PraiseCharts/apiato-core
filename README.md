@@ -47,6 +47,13 @@ a new architectural pattern and comes with an amazing list of [features](http://
 - [Query Parameters support](https://apiato.io/docs/core-features/query-parameters).
 
 
+## PraiseCharts fork: repository caching
+
+Repositories are uncached by default in this fork. Classes may explicitly opt in
+with `CacheableInterface` and the Apiato cache trait; the global cache switch still
+controls whether opted-in classes cache. See [repository caching and migration](docs/repository-caching.md)
+before updating a consuming application.
+
 ## Learning Apiato
 Apiato has an extensive and thorough [documentation](https://apiato.io/docs).
 

@@ -35,7 +35,7 @@ trait ResponseTrait
         }
 
         // now, finally check, if the class is really a TRANSFORMER
-        if (!($transformer instanceof Transformer)) {
+        if (!$transformer instanceof Transformer) {
             throw new InvalidTransformerException();
         }
 
