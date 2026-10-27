@@ -54,7 +54,7 @@ trait HasRequestCriteriaTrait
         }
 
         // check if it is a Repository class
-        if (!($validatedRepository instanceof Repository)) {
+        if (!$validatedRepository instanceof Repository) {
             throw new CoreInternalErrorException();
         }
 
