@@ -4,18 +4,13 @@ namespace Apiato\Core\Abstracts\Repositories;
 
 use Apiato\Core\Traits\CanEagerLoadTrait;
 use Apiato\Core\Traits\HasRequestCriteriaTrait;
-use Prettus\Repository\Contracts\CacheableInterface;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Eloquent\BaseRepository;
-use Prettus\Repository\Traits\CacheableRepository;
 
-abstract class Repository extends BaseRepository implements CacheableInterface
+abstract class Repository extends BaseRepository
 {
     use HasRequestCriteriaTrait;
     use CanEagerLoadTrait;
-    use CacheableRepository {
-        CacheableRepository::paginate as cacheablePaginate;
-    }
 
     // TODO: BC: set return type to void
     /**
@@ -99,6 +94,18 @@ abstract class Repository extends BaseRepository implements CacheableInterface
      */
     public function paginate($limit = null, $columns = ['*'], $method = 'paginate'): mixed
     {
+        return $this->paginateWithOptions(
+            $limit,
+            $columns,
+            fn ($limit) => parent::paginate($limit, $columns, $method),
+        );
+    }
+
+    /**
+     * Apply the same pagination rules to uncached and explicitly cached reads.
+     */
+    protected function paginateWithOptions($limit, $columns, \Closure $paginate): mixed
+    {
         $limit = $this->setPaginationLimit($limit);
 
         if ($this->wantsToSkipPagination($limit) && $this->canSkipPagination()) {
@@ -109,7 +116,18 @@ abstract class Repository extends BaseRepository implements CacheableInterface
             $limit = $this->maxPaginationLimit;
         }
 
-        return $this->cacheablePaginate($limit, $columns, $method);
+        return $paginate($limit);
+    }
+
+    /**
+     * Keep existing callers compatible without opting into caching.
+     * Cacheable repositories replace this no-op with the cache trait's method.
+     *
+     * @return $this
+     */
+    public function skipCache($status = true)
+    {
+        return $this;
     }
 
     public function setPaginationLimit($limit): mixed

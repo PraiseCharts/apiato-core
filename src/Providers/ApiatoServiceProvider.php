@@ -18,6 +18,7 @@ class ApiatoServiceProvider extends AbstractMainServiceProvider
     public array $serviceProviders = [
         CollectionMacroServiceProvider::class,
         ConfigMacroServiceProvider::class,
+        RepositoryServiceProvider::class,
     ];
 
     public function register(): void
