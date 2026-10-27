@@ -60,8 +60,8 @@ on a cache miss; that does not execute the database query twice.
 ## Cache cleanup
 
 Apiato registers a wrapper for Prettus's `CleanCacheRepository` listener. It skips
-ordinary repositories, so their writes do not enumerate the cache-key registry
-or delete cached results. Explicitly cacheable repositories retain Prettus's
+ordinary repositories before resolving a cache store, so their writes do not
+depend on that store, enumerate the cache-key registry, or delete cached results. Explicitly cacheable repositories retain Prettus's
 normal create/update/delete cleanup behavior and cleanup configuration.
 
 This does **not** make Prettus invalidation account-surgical or transaction-safe.

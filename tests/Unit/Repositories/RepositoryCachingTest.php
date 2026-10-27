@@ -151,6 +151,20 @@ class RepositoryCachingTest extends RepositoryTestCase
         $this->assertFileDoesNotExist($this->storage . '/framework/cache/repository-cache-keys.json');
     }
 
+    public function testDefaultWritesDoNotRequireACacheStore(): void
+    {
+        $this->app->bind('cache', function (): void {
+            throw new LogicException('Uncached writes must not resolve the cache store.');
+        });
+        $repository = $this->repository();
+        $repository->create(['id' => 6, 'name' => 'New record', 'group_id' => 1]);
+        $repository->update(['name' => 'Updated record'], 6);
+        $repository->delete(6);
+
+        $this->assertNull($this->database->getConnection()->table('repository_records')->find(6));
+        $this->assertFileDoesNotExist($this->storage . '/framework/cache/repository-cache-keys.json');
+    }
+
     public function testDefaultWritesStillPublishModelAndRepositoryEvents(): void
     {
         $counts = [];
