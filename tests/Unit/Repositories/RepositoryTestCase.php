@@ -3,7 +3,7 @@
 namespace Apiato\Core\Tests\Unit\Repositories;
 
 use Apiato\Core\Abstracts\Repositories\Repository;
-use Apiato\Core\Providers\RepositoryServiceProvider;
+use Apiato\Core\Providers\ApiatoServiceProvider;
 use Apiato\Core\Traits\CacheableRepository;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\Repository as CacheStore;
@@ -73,7 +73,7 @@ abstract class RepositoryTestCase extends TestCase
         $this->app->instance('cache', new CacheStore($this->store));
         $events = new Dispatcher($this->app);
         $this->app->instance('events', $events);
-        (new RepositoryServiceProvider($this->app))->register();
+        (new RepositoryTestServiceProvider($this->app))->register();
         Facade::clearResolvedInstances();
         Facade::setFacadeApplication($this->app);
         foreach (['Created', 'Updated', 'Deleted'] as $action) {
@@ -146,6 +146,19 @@ abstract class RepositoryTestCase extends TestCase
     protected function selectCount(): int
     {
         return count(array_filter($this->database->getConnection()->getQueryLog(), fn ($query) => str_starts_with(strtolower($query['query']), 'select')));
+    }
+}
+
+class RepositoryTestServiceProvider extends ApiatoServiceProvider
+{
+    public array $serviceProviders = [];
+    public \Closure|null $registerApplicationProviders = null;
+
+    public function runLoaderRegister(): void
+    {
+        if (null !== $this->registerApplicationProviders) {
+            ($this->registerApplicationProviders)($this->app);
+        }
     }
 }
 

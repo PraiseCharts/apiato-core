@@ -120,6 +120,42 @@ class RepositoryPaginationTest extends RepositoryTestCase
         $this->assertSame('Second group', $result->items()[0]->group->name);
     }
 
+    public static function scopeModes(): array
+    {
+        return [
+            'uncached with master on' => [false, true, 2],
+            'uncached with master off' => [false, false, 2],
+            'explicitly cached with master on' => [true, true, 5],
+            'explicitly cached with master off' => [true, false, 2],
+        ];
+    }
+
+    #[DataProvider('scopeModes')]
+    public function testTwoReadsExposeTheUnderlyingScopeLifetime(bool $cacheable, bool $enabled, int $secondTotal): void
+    {
+        $this->app['config']->set('repository.cache.enabled', $enabled);
+        $repository = $this->repository($cacheable);
+        $first = $repository->scopeQuery(fn ($query) => $query->where('group_id', 2))->paginate(2);
+        $this->assertSame(2, $first->total());
+
+        // A different limit avoids a cache hit for the first read's result.
+        $second = $repository->paginate(3);
+
+        $this->assertSame($secondTotal, $second->total());
+        $this->assertSame(5 === $secondTotal ? [1, 2, 3] : [4, 5], $second->getCollection()->pluck('id')->all());
+    }
+
+    public function testUncachedScopeCanBeResetBeforeReusingTheRepository(): void
+    {
+        $repository = $this->repository();
+        $first = $repository->scopeQuery(fn ($query) => $query->where('group_id', 2))->paginate(2);
+        $this->assertSame(2, $first->total());
+
+        $repository->resetScope();
+
+        $this->assertSame(5, $repository->paginate(3)->total());
+    }
+
     public function testCachedPaginationKeysUseTheEffectiveMaximum(): void
     {
         $repository = $this->repository(true);

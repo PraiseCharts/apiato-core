@@ -57,9 +57,36 @@ The adapter applies them before choosing a cache key, so a hit cannot bypass a
 reduced maximum or a newly disabled unpaginated read. A loader may pass through the same pagination policy again
 on a cache miss; that does not execute the database query twice.
 
+## Query scope lifetime
+
+Removing the cache trait also changes which read wrapper runs. Prettus's base
+`find()`, `findByField()`, `findWhere()` and `paginate()` retain `scopeQuery()` on
+the repository instance. When caching is active for that method and not skipped,
+the cache wrapper clears the scope after reading. Disabled, excluded, or skipped
+reads already use the base path and retain the scope.
+
+With an ordinary repository, reusing the same instance now retains that scope
+even when the master switch is on:
+
+```php
+$repository->scopeQuery(fn ($query) => $query->where('group_id', 2))
+    ->paginate(2); // Scoped read.
+$repository->paginate(3); // Still scoped on the ordinary repository.
+$repository->resetScope();
+$repository->paginate(3); // Unscoped read.
+```
+
+Audit Tasks and Actions that reuse repository instances across reads. Explicitly
+reset or replace a scope when the next operation requires different semantics.
+`resetScope()` does not remove stored criteria. Do not add global reset wrappers
+without deciding whether to change the existing cache-disabled behavior too.
+The focused tests cover two consecutive reads with the master switch on/off and
+both ordinary and opted-in repositories.
+
 ## Cache cleanup
 
-Apiato registers a wrapper for Prettus's `CleanCacheRepository` listener. It skips
+`ApiatoServiceProvider::register()` binds the wrapper before application providers
+load, so those providers can still replace it. The wrapper skips
 ordinary repositories before resolving a cache store, so their writes do not
 depend on that store, enumerate the cache-key registry, or delete cached results. Explicitly cacheable repositories retain Prettus's
 normal create/update/delete cleanup behavior and cleanup configuration.
@@ -92,7 +119,8 @@ Composer lock without checking its integration first:
 4. Preserve mixed-version read/write consistency during deployment. Existing
    cached readers need invalidation until those readers are retired. Do not flush
    shared sessions, challenges, locks, or other unrelated cache state.
-5. Test pagination, criteria, Model events, transactions and intended cache reuse.
+5. Audit reused repository instances for the scope-lifetime difference above.
+   Test pagination, criteria, Model events, transactions and intended cache reuse.
    Measure query counts and load before expanding the rollout. No production
    cache enablement or performance gain is implied by the source change.
 
@@ -106,4 +134,5 @@ cacheable classes.
 array cache store. It does not boot a consuming application or use its databases,
 Redis, workers, or runtime settings. Coverage includes uncached defaults with the
 master switch on, class-level opt-in, cleanup, cache bypass, pagination, criteria,
-and eager loading. A real shared-store/multi-worker rollout needs separate tests.
+eager loading, reused-instance scope lifetime, and application cleanup-binding
+precedence. A real shared-store/multi-worker rollout needs separate tests.

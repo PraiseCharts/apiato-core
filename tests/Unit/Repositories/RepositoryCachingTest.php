@@ -3,8 +3,6 @@
 namespace Apiato\Core\Tests\Unit\Repositories;
 
 use Apiato\Core\Listeners\CleanRepositoryCache;
-use Apiato\Core\Providers\ApiatoServiceProvider;
-use Apiato\Core\Providers\RepositoryServiceProvider;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Prettus\Repository\Contracts\CacheableInterface;
 use Prettus\Repository\Listeners\CleanCacheRepository;
@@ -215,10 +213,17 @@ class RepositoryCachingTest extends RepositoryTestCase
         $this->assertSame($deletes, $this->store->deletes);
     }
 
-    public function testCacheCleanupProviderIsRegisteredAndBound(): void
+    public function testCacheCleanupBindingPrecedesApplicationProviders(): void
     {
-        $provider = new ApiatoServiceProvider($this->app);
-        $this->assertContains(RepositoryServiceProvider::class, $provider->serviceProviders);
-        $this->assertInstanceOf(CleanRepositoryCache::class, $this->app->make(CleanCacheRepository::class));
+        unset($this->app[CleanCacheRepository::class]);
+        $applicationListener = new CleanRepositoryCache();
+        $provider = new RepositoryTestServiceProvider($this->app);
+        $provider->registerApplicationProviders = function ($app) use ($applicationListener): void {
+            $this->assertInstanceOf(CleanRepositoryCache::class, $app->make(CleanCacheRepository::class));
+            $app->instance(CleanCacheRepository::class, $applicationListener);
+        };
+        $provider->register();
+
+        $this->assertSame($applicationListener, $this->app->make(CleanCacheRepository::class));
     }
 }

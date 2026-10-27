@@ -4,11 +4,13 @@ namespace Apiato\Core\Providers;
 
 use Apiato\Core\Abstracts\Providers\MainServiceProvider as AbstractMainServiceProvider;
 use Apiato\Core\Foundation\Apiato;
+use Apiato\Core\Listeners\CleanRepositoryCache;
 use Apiato\Core\Loaders\AutoLoaderTrait;
 use Apiato\Core\Providers\MacroProviders\CollectionMacroServiceProvider;
 use Apiato\Core\Providers\MacroProviders\ConfigMacroServiceProvider;
 use Apiato\Core\Traits\ValidationTrait;
 use Illuminate\Support\Facades\Schema;
+use Prettus\Repository\Listeners\CleanCacheRepository;
 
 class ApiatoServiceProvider extends AbstractMainServiceProvider
 {
@@ -18,7 +20,6 @@ class ApiatoServiceProvider extends AbstractMainServiceProvider
     public array $serviceProviders = [
         CollectionMacroServiceProvider::class,
         ConfigMacroServiceProvider::class,
-        RepositoryServiceProvider::class,
     ];
 
     public function register(): void
@@ -32,6 +33,8 @@ class ApiatoServiceProvider extends AbstractMainServiceProvider
 
         // parent::register() should be called AFTER we bind 'Apiato'
         parent::register();
+
+        $this->app->bind(CleanCacheRepository::class, CleanRepositoryCache::class);
 
         $this->runLoaderRegister();
 
